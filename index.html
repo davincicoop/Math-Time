@@ -1082,7 +1082,7 @@ function renderAnswer(){
   if(!session.answer){box.textContent='?';box.classList.add('empty-hint');box.classList.remove('has-value');chk.classList.add('disabled');}
   else{box.textContent=session.answer;box.classList.remove('empty-hint');box.classList.add('has-value');chk.classList.remove('disabled');}
 }
-function numInput(d){if(session.locked)return;if(session.answer.replace('-','').length>=6)return;if(d==='0'&&!session.answer)return;session.answer+=d;renderAnswer();}
+function numInput(d){if(session.locked)return;if(session.answer.replace('-','').length>=6)return;if(session.answer==='0'||session.answer==='-0')return;session.answer+=d;renderAnswer();}
 function delInput(){if(session.locked)return;session.answer=session.answer.slice(0,-1);renderAnswer();}
 function toggleNeg(){if(session.locked)return;session.answer=session.answer.startsWith('-')?session.answer.slice(1):'-'+session.answer;if(session.answer==='-')session.answer='';renderAnswer();}
 
