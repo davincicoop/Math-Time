@@ -676,6 +676,25 @@ const NB_SUB_VIDEOS=[
   {id:'ZORpBQ5CSTo',ep:'S5 E7',title:'Ten Vaulting',desc:'Bridging through 10 using subtraction within addition.'},
   {id:'LFY7CK0V8ak',ep:'S8 E14',title:'Subtraction Somersaults',desc:'Two-digit subtraction strategies.'},
 ];
+const NB_ADD_VIDEOS=[
+  {id:'bz2oWyDjgbc',ep:'S1 E2',title:'Another One',desc:'First addition concept (1+1=2).'},
+  {id:'S7CYJ9US2fk',ep:'S2 E6',title:'Just Add One',desc:'Counting to 10 by adding one.'},
+  {id:'O7VKyV43SBE',ep:'S2 E7',title:'Blast Off',desc:'Number bonds to 10 (pairs that make 10).'},
+  {id:'3pbyveE9C-4',ep:'S2 E12',title:'Fluffies',desc:'Addition / number bonds to 7.'},
+  {id:'cxGC0G273KI',ep:'S2 E14',title:'Numberblock Castle',desc:'Addition using numbers 1–4.'},
+  {id:'Jtog_PFcWA0',ep:'S3 E3',title:'The Numberblocks Express',desc:'Addition and subtraction; number bonds to 5.'},
+  {id:'3t9gGGJBv88',ep:'S3 E4',title:'Fruit Salad',desc:'Splitting/adding numbers 1–5.'},
+  {id:'9c9QagLPh5A',ep:'S3 E10',title:'Hiccups',desc:'Number bonds to 6–10.'},
+  {id:'3P6GlTb9CfQ',ep:'S3 E12',title:'Numberblock Rally',desc:'Addition and taking away with 1–10.'},
+  {id:'s-VIhmwZn5c',ep:'S3 E13',title:'Five and Friends',desc:'Addition by 5; all of 6–10 as 5+something.'},
+  {id:'2Gl9-HG2SpQ',ep:'S3 E15',title:'Ten Again',desc:'All number bonds to 10.'},
+  {id:'pjdfEsqbPi0',ep:'S4 E3',title:"Ten's Place",desc:'Place value and simple addition/subtraction with two-digit numbers.'},
+  {id:'Zk7Z7jCWun8',ep:'S4 E4',title:'Balancing Bridge',desc:'Bridging through 10 (addition beyond 10).'},
+  {id:'gVdjzgkBrXg',ep:'S5 E3',title:"Ten's Top Ten",desc:'Number bonds to 6, 7, 8, 9 and 10.'},
+  {id:'V9ZNvN7PedY',ep:'S5 E6',title:'The Many Friends of Twenty',desc:'Number bonds to 20.'},
+  {id:'ZORpBQ5CSTo',ep:'S5 E7',title:'Ten Vaulting',desc:'Bridging through 10 as an addition strategy.'},
+  {id:'csi2iPXqphE',ep:'S8 E13',title:'The All-Knowing Nine',desc:'New ways to add numbers (addition strategies).'},
+];
 let _modalVideos=[];
 function getVideosForProblem(p){
   if(!p) return [];
@@ -687,6 +706,7 @@ function getVideosForProblem(p){
     return vids;
   }
   if(p.op==='sub') return NB_SUB_VIDEOS.map(v=>({...v,isSub:true}));
+  if(p.op==='add') return NB_ADD_VIDEOS.map(v=>({...v,isAdd:true}));
   return [];
 }
 function updateHelpBtn(){
@@ -697,16 +717,17 @@ function openVideoModal(){
   if(!vids.length) return;
   _modalVideos=vids;
   const isSub=vids[0]&&vids[0].isSub;
-  const subheading=isSub?'Numberblocks · Subtraction Episodes':`Numberblocks · ${vids.map(v=>v.times).join(' & ')} Times Table${vids.length>1?'s':''}`;
+  const isAdd=vids[0]&&vids[0].isAdd;
+  const subheading=isSub?'Numberblocks · Subtraction Episodes':isAdd?'Numberblocks · Addition Episodes':`Numberblocks · ${vids.map(v=>v.times).join(' & ')} Times Table${vids.length>1?'s':''}`;
   document.getElementById('video-modal-sub').textContent=subheading;
   document.getElementById('video-cards').innerHTML=vids.map((v,i)=>`
     <button class="video-card-btn" onclick="playVideoCard(${i})">
       <div class="video-card-body">
         <div class="video-yt-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M9.5 15.5v-7l7 3.5-7 3.5z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-2.5 6.5v7l7-3.5-7-3.5z"/></svg></div>
         <div class="video-card-info">
-          <div class="video-card-times">${v.isSub?v.ep:`${v.times} Times Table · ${v.ep}`}</div>
+          <div class="video-card-times">${(v.isSub||v.isAdd)?v.ep:`${v.times} Times Table · ${v.ep}`}</div>
           <div class="video-card-title">${v.title}</div>
-          <div class="video-card-desc">${v.desc} <span style="color:var(--${v.isSub?'sub':'mul'});font-weight:800">→ Opens YouTube</span></div>
+          <div class="video-card-desc">${v.desc} <span style="color:var(--${v.isSub?'sub':v.isAdd?'add':'mul'});font-weight:800">→ Opens YouTube</span></div>
         </div>
         <div class="video-card-arrow">▶</div>
       </div>
