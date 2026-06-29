@@ -663,14 +663,31 @@ const NB_VIDEOS={
   9:{id:'qbjaIN2xrx4',times:'9×',title:"Nine's Time to Shine",desc:'The Nine Times Table cheers for Nine.',ep:'S7 E14'},
   10:{id:'mtcTEOWcPTA',times:'10×',title:'Heroes With Zeroes',desc:'Ten and the Ten Times Table rocket to the rescue.',ep:'S5 E28'},
 };
+const NB_SUB_VIDEOS=[
+  {id:'Kv_j6gpD5Jo',ep:'S1 E14',title:'Holes',desc:'Adding and subtracting by one.'},
+  {id:'SkuHXMiJwFw',ep:'S2 E13',title:'The Two Tree',desc:'Adding and subtracting by two.'},
+  {id:'ynTb9shdZLY',ep:'S2 E15',title:'Ten Green Bottles',desc:'Subtracting by 1 / counting back from 10.'},
+  {id:'Jtog_PFcWA0',ep:'S3 E3',title:'The Numberblocks Express',desc:'Addition and subtraction; number bonds to 5.'},
+  {id:'3t9gGGJBv88',ep:'S3 E4',title:'Fruit Salad',desc:'Splitting/subtracting numbers 1–5.'},
+  {id:'qUPuXtHd64A',ep:'S3 E11',title:"What's the Difference?",desc:'Subtraction as finding the difference.'},
+  {id:'3P6GlTb9CfQ',ep:'S3 E12',title:'Numberblock Rally',desc:'Taking away with numbers 1–10.'},
+  {id:'pjdfEsqbPi0',ep:'S4 E3',title:"Ten's Place",desc:'Place value and simple addition/subtraction from two digits.'},
+  {id:'Zk7Z7jCWun8',ep:'S4 E4',title:'Balancing Bridge',desc:'Bridging through ten (addition with subtraction strategy).'},
+  {id:'ZORpBQ5CSTo',ep:'S5 E7',title:'Ten Vaulting',desc:'Bridging through 10 using subtraction within addition.'},
+  {id:'LFY7CK0V8ak',ep:'S8 E14',title:'Subtraction Somersaults',desc:'Two-digit subtraction strategies.'},
+];
 let _modalVideos=[];
 function getVideosForProblem(p){
-  if(!p||p.op!=='mul') return [];
-  const parts=p.display.split('×').map(s=>parseInt(s.trim()));
-  if(parts.length!==2) return [];
-  const seen=new Set(), vids=[];
-  parts.forEach(n=>{ if(NB_VIDEOS[n]&&!seen.has(n)){seen.add(n);vids.push({num:n,...NB_VIDEOS[n]});} });
-  return vids;
+  if(!p) return [];
+  if(p.op==='mul'){
+    const parts=p.display.split('×').map(s=>parseInt(s.trim()));
+    if(parts.length!==2) return [];
+    const seen=new Set(), vids=[];
+    parts.forEach(n=>{ if(NB_VIDEOS[n]&&!seen.has(n)){seen.add(n);vids.push({num:n,...NB_VIDEOS[n]});} });
+    return vids;
+  }
+  if(p.op==='sub') return NB_SUB_VIDEOS.map(v=>({...v,isSub:true}));
+  return [];
 }
 function updateHelpBtn(){
   document.getElementById('help-btn').classList.toggle('visible',getVideosForProblem(session.problem).length>0);
@@ -679,16 +696,17 @@ function openVideoModal(){
   const vids=getVideosForProblem(session.problem);
   if(!vids.length) return;
   _modalVideos=vids;
-  const nums=vids.map(v=>v.times).join(' & ');
-  document.getElementById('video-modal-sub').textContent=`Numberblocks · ${nums} Times Table${vids.length>1?'s':''}`;
+  const isSub=vids[0]&&vids[0].isSub;
+  const subheading=isSub?'Numberblocks · Subtraction Episodes':`Numberblocks · ${vids.map(v=>v.times).join(' & ')} Times Table${vids.length>1?'s':''}`;
+  document.getElementById('video-modal-sub').textContent=subheading;
   document.getElementById('video-cards').innerHTML=vids.map((v,i)=>`
     <button class="video-card-btn" onclick="playVideoCard(${i})">
       <div class="video-card-body">
         <div class="video-yt-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M9.5 15.5v-7l7 3.5-7 3.5z"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-2.5 6.5v7l7-3.5-7-3.5z"/></svg></div>
         <div class="video-card-info">
-          <div class="video-card-times">${v.times} Times Table · ${v.ep}</div>
+          <div class="video-card-times">${v.isSub?v.ep:`${v.times} Times Table · ${v.ep}`}</div>
           <div class="video-card-title">${v.title}</div>
-          <div class="video-card-desc">${v.desc} <span style="color:var(--mul);font-weight:800">→ Opens YouTube</span></div>
+          <div class="video-card-desc">${v.desc} <span style="color:var(--${v.isSub?'sub':'mul'});font-weight:800">→ Opens YouTube</span></div>
         </div>
         <div class="video-card-arrow">▶</div>
       </div>
