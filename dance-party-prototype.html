@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dance Party – Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#FF2D87;--cyan:#00C2FF;--yellow:#FFD600;--lime:#B2FF00;
+  --dark:#1A0535;--purple:#a78bfa;
+}
+html,body{height:100%;width:100%;background:var(--dark);overflow:hidden;font-family:'Nunito',sans-serif;}
+
+/* ── DANCE PARTY OVERLAY ── */
+#dp-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:var(--dark);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:16px;overflow:hidden;
+}
+#dp-disco{
+  position:absolute;inset:0;pointer-events:none;
+  animation:dp-disco .6s infinite;mix-blend-mode:screen;
+}
+@keyframes dp-disco{
+  0%  {background:rgba(255,45,135,.08);}
+  25% {background:rgba(0,194,255,.08);}
+  50% {background:rgba(178,255,0,.06);}
+  75% {background:rgba(255,214,0,.08);}
+  100%{background:rgba(255,45,135,.08);}
+}
+.dp-bg-disc{
+  position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none;
+  animation:dp-drift linear infinite alternate;
+}
+@keyframes dp-drift{from{transform:translate(0,0) scale(1);}to{transform:translate(40px,30px) scale(1.15);}}
+
+#dp-header{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(2rem,7vw,3.5rem);
+  color:var(--yellow);text-align:center;line-height:1;
+  position:relative;z-index:2;
+  animation:dp-pulse .5s infinite alternate;
+}
+@keyframes dp-pulse{
+  from{text-shadow:0 0 12px var(--pink),0 0 30px var(--pink);}
+  to{text-shadow:0 0 24px var(--cyan),0 0 60px var(--cyan);}
+}
+
+#dp-timer-ring{position:relative;width:80px;height:80px;flex-shrink:0;z-index:2;}
+#dp-timer-svg{transform:rotate(-90deg);}
+#dp-timer-circle-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:8;}
+#dp-timer-circle{fill:none;stroke:var(--yellow);stroke-width:8;stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s;}
+#dp-timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:1.7rem;color:#fff;}
+
+#dp-emoji-rain{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden;}
+.dp-emoji-drop{position:absolute;top:-60px;font-size:2rem;user-select:none;animation:dp-fall linear forwards;}
+@keyframes dp-fall{to{transform:translateY(110vh) rotate(360deg);opacity:.2;}}
+.dp-confetti-dot{position:fixed;border-radius:50%;pointer-events:none;z-index:502;animation:dp-cffall linear forwards;}
+@keyframes dp-cffall{0%{opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+/* ── DANCER STAGE ── */
+#dp-dancer-stage{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+  width:100%;max-width:480px;
+}
+
+/* Character wrapper — bounce the whole body */
+#dancer-body{
+  animation:dancer-bounce .5s ease-in-out infinite alternate;
+  transform-origin:center bottom;
+  display:flex;justify-content:center;
+}
+@keyframes dancer-bounce{
+  from{transform:translateY(0) scaleY(1);}
+  to{transform:translateY(-14px) scaleY(1.03);}
+}
+
+/* SVG parts get their own animations via class */
+.dancer-head{
+  animation:head-bob .5s ease-in-out infinite alternate;
+  transform-origin:50% 100%;
+}
+@keyframes head-bob{
+  from{transform:rotate(-6deg);}
+  to{transform:rotate(6deg);}
+}
+.dancer-arm-left{
+  animation:arm-swing-left .5s ease-in-out infinite alternate;
+  transform-origin:12px 8px; /* shoulder pivot */
+}
+@keyframes arm-swing-left{
+  from{transform:rotate(-35deg);}
+  to{transform:rotate(15deg);}
+}
+.dancer-arm-right{
+  animation:arm-swing-right .5s ease-in-out infinite alternate;
+  transform-origin:4px 8px; /* shoulder pivot */
+}
+@keyframes arm-swing-right{
+  from{transform:rotate(35deg);}
+  to{transform:rotate(-15deg);}
+}
+.dancer-leg-left{
+  animation:leg-left .5s ease-in-out infinite alternate;
+  transform-origin:8px 0px;
+}
+@keyframes leg-left{
+  from{transform:rotate(-18deg);}
+  to{transform:rotate(8deg);}
+}
+.dancer-leg-right{
+  animation:leg-right .5s ease-in-out infinite alternate;
+  transform-origin:8px 0px;
+}
+@keyframes leg-right{
+  from{transform:rotate(18deg);}
+  to{transform:rotate(-8deg);}
+}
+
+/* Occasional spin: apply to the whole SVG wrapper, 3s period, only active during music */
+#dancer-svg-wrap{display:inline-block;}
+#dancer-svg-wrap.spinning{animation:dancer-spin 3s ease-in-out infinite;}
+@keyframes dancer-spin{
+  0%  {transform:rotate(0deg) scale(1);}
+  15% {transform:rotate(360deg) scale(1.12);}
+  30% {transform:rotate(360deg) scale(1);}
+  100%{transform:rotate(360deg) scale(1);}
+}
+
+/* Star sparkles that orbit the dancer */
+.sparkle{
+  position:absolute;font-size:1.4rem;pointer-events:none;
+  animation:sparkle-orbit linear infinite;
+}
+@keyframes sparkle-orbit{
+  from{transform:rotate(var(--start)) translateX(var(--r)) rotate(calc(-1*var(--start)));}
+  to{transform:rotate(calc(var(--start)+360deg)) translateX(var(--r)) rotate(calc(-1*(var(--start)+360deg)));}
+}
+
+/* ── MUSIC BUTTON ── */
+#music-btn{
+  position:relative;z-index:10;
+  background:var(--pink);color:#fff;
+  border:none;border-radius:50px;
+  font-family:'Fredoka One',cursive;
+  font-size:1.3rem;
+  padding:14px 36px;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(255,45,135,.6);
+  transition:transform .1s,box-shadow .1s;
+  user-select:none;
+}
+#music-btn:active{transform:scale(.94);}
+#music-btn.playing{
+  background:var(--cyan);
+  box-shadow:0 0 20px rgba(0,194,255,.6);
+}
+
+/* ── PROTOTYPE BADGE ── */
+#proto-badge{
+  position:fixed;top:14px;right:14px;z-index:600;
+  background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.15);
+  border-radius:8px;padding:5px 10px;
+  font-size:11px;font-weight:800;letter-spacing:.5px;
+  color:rgba(255,255,255,.5);text-transform:uppercase;
+}
+#back-link{
+  position:fixed;top:14px;left:14px;z-index:600;
+  color:rgba(255,255,255,.4);font-size:13px;font-weight:700;
+  text-decoration:none;
+}
+#back-link:hover{color:rgba(255,255,255,.8);}
+</style>
+</head>
+<body>
+
+<a id="back-link" href="index.html">← Back to game</a>
+<div id="proto-badge">Prototype — not live yet</div>
+
+<div id="dp-overlay">
+  <!-- background blobs -->
+  <div class="dp-bg-disc" style="width:500px;height:500px;background:#FF2D87;top:-100px;left:-150px;animation-duration:8s;"></div>
+  <div class="dp-bg-disc" style="width:400px;height:400px;background:#00C2FF;bottom:-80px;right:-100px;animation-duration:11s;"></div>
+  <div id="dp-disco"></div>
+  <div id="dp-emoji-rain"></div>
+
+  <div id="dp-header">🎉 DANCE BREAK! 🎉</div>
+
+  <div id="dp-timer-ring">
+    <svg id="dp-timer-svg" width="80" height="80" viewBox="0 0 100 100">
+      <circle id="dp-timer-circle-bg" cx="50" cy="50" r="45"/>
+      <circle id="dp-timer-circle" cx="50" cy="50" r="45"/>
+    </svg>
+    <div id="dp-timer-text">30</div>
+  </div>
+
+  <!-- DANCER STAGE (replaces video) -->
+  <div id="dp-dancer-stage">
+    <div id="dancer-body">
+      <div id="dancer-svg-wrap">
+        <!-- Sparkles -->
+        <div class="sparkle" style="--start:0deg;--r:90px;top:50%;left:50%;margin:-14px;animation-duration:2.1s;">✨</div>
+        <div class="sparkle" style="--start:120deg;--r:90px;top:50%;left:50%;margin:-14px;animation-duration:2.7s;">⭐</div>
+        <div class="sparkle" style="--start:240deg;--r:90px;top:50%;left:50%;margin:-14px;animation-duration:1.8s;">🌟</div>
+
+        <svg width="180" height="240" viewBox="0 0 180 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- Left arm (behind body) -->
+          <g class="dancer-arm-left" transform="translate(42,108)">
+            <rect x="-8" y="8" width="16" height="52" rx="8" fill="#FF2D87"/>
+            <!-- hand -->
+            <circle cx="0" cy="64" r="10" fill="#FFD600"/>
+          </g>
+
+          <!-- Right arm (behind body) -->
+          <g class="dancer-arm-right" transform="translate(138,108)">
+            <rect x="-8" y="8" width="16" height="52" rx="8" fill="#FF2D87"/>
+            <circle cx="0" cy="64" r="10" fill="#FFD600"/>
+          </g>
+
+          <!-- Body -->
+          <rect x="54" y="104" width="72" height="80" rx="20" fill="#FF2D87"/>
+          <!-- Belly button / shirt detail -->
+          <circle cx="90" cy="148" r="6" fill="rgba(255,255,255,.25)"/>
+          <rect x="70" y="128" width="40" height="4" rx="2" fill="rgba(255,255,255,.2)"/>
+
+          <!-- Left leg -->
+          <g class="dancer-leg-left" transform="translate(68,184)">
+            <rect x="-11" y="0" width="22" height="48" rx="11" fill="#00C2FF"/>
+            <!-- shoe -->
+            <ellipse cx="0" cy="52" rx="14" ry="8" fill="#FFD600"/>
+          </g>
+
+          <!-- Right leg -->
+          <g class="dancer-leg-right" transform="translate(112,184)">
+            <rect x="-11" y="0" width="22" height="48" rx="11" fill="#00C2FF"/>
+            <ellipse cx="0" cy="52" rx="14" ry="8" fill="#FFD600"/>
+          </g>
+
+          <!-- Neck -->
+          <rect x="78" y="92" width="24" height="18" rx="8" fill="#FFD600"/>
+
+          <!-- Head group -->
+          <g class="dancer-head" transform="translate(90,72)">
+            <!-- head -->
+            <circle cx="0" cy="0" r="42" fill="#FFD600"/>
+            <!-- hair highlights -->
+            <circle cx="-18" cy="-30" r="10" fill="#FF2D87" opacity=".7"/>
+            <circle cx="0"  cy="-38" r="8"  fill="#FF2D87" opacity=".7"/>
+            <circle cx="18" cy="-30" r="10" fill="#FF2D87" opacity=".7"/>
+            <!-- left eye -->
+            <ellipse cx="-14" cy="-4" rx="8" ry="10" fill="#1A0535"/>
+            <circle  cx="-12" cy="-7" r="3" fill="#fff"/>
+            <!-- right eye -->
+            <ellipse cx="14"  cy="-4" rx="8" ry="10" fill="#1A0535"/>
+            <circle  cx="16"  cy="-7" r="3" fill="#fff"/>
+            <!-- smile -->
+            <path d="M-18 14 Q0 30 18 14" stroke="#1A0535" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <!-- rosy cheeks -->
+            <circle cx="-26" cy="8" r="7" fill="#FF2D87" opacity=".35"/>
+            <circle cx="26"  cy="8" r="7" fill="#FF2D87" opacity=".35"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <button id="music-btn" onclick="toggleMusic()">▶ Play Music</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+//  TIMER
+// ══════════════════════════════
+const DP_DURATION = 30;
+const DP_CIRC = 2 * Math.PI * 45;
+let _dpSecs = DP_DURATION;
+let _dpTimerInt = null;
+let _dpEmojiInt = null;
+let _dpConfettiInt = null;
+
+function dpUpdateTimer(s) {
+  document.getElementById('dp-timer-text').textContent = s;
+  const circle = document.getElementById('dp-timer-circle');
+  circle.style.strokeDashoffset = DP_CIRC * (1 - s / DP_DURATION);
+  circle.style.stroke = s > 15 ? '#FFD600' : s > 7 ? '#FF2D87' : '#B2FF00';
+}
+
+function startTimer() {
+  dpUpdateTimer(_dpSecs);
+  _dpTimerInt = setInterval(() => {
+    _dpSecs--;
+    dpUpdateTimer(_dpSecs);
+    if (_dpSecs <= 0) { _dpSecs = DP_DURATION; dpUpdateTimer(_dpSecs); }
+  }, 1000);
+}
+
+// ══════════════════════════════
+//  EMOJI RAIN & CONFETTI
+// ══════════════════════════════
+const DP_EMOJIS = ['🕺','💃','🎉','🎊','⭐','🌟','🎵','🎶','🌈','🦄','🔥','✨','🎸','🥳'];
+
+function dpDropEmoji() {
+  const rain = document.getElementById('dp-emoji-rain');
+  const el = document.createElement('div');
+  el.className = 'dp-emoji-drop';
+  el.textContent = DP_EMOJIS[Math.floor(Math.random() * DP_EMOJIS.length)];
+  el.style.left = Math.random() * 100 + 'vw';
+  const dur = 2.5 + Math.random() * 2;
+  el.style.animationDuration = dur + 's';
+  el.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+  rain.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000 + 100);
+}
+
+function dpSpawnConfetti() {
+  const colors = ['#FFD600','#FF2D87','#00C2FF','#B2FF00','#FF6B35','#FFFFFF'];
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'dp-confetti-dot';
+    const sz = 6 + Math.random() * 10;
+    d.style.cssText = `width:${sz}px;height:${sz}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:${Math.random()*100}vw;top:-20px;animation-duration:${2+Math.random()*2}s;`;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 4500);
+  }
+}
+
+// ══════════════════════════════
+//  AUDIO — synthesized dance beat
+// ══════════════════════════════
+let audioCtx = null;
+let musicPlaying = false;
+let scheduleAhead = 0.1;    // seconds to look ahead
+let scheduleInterval = 80;  // ms between scheduler calls
+let nextNoteTime = 0;
+let currentStep = 0;
+let scheduleTimer = null;
+const BPM = 122;
+const STEP = 60 / BPM / 2; // 8th note duration
+
+// Pentatonic melody (C4 D4 E4 G4 A4 C5)
+const MELODY_NOTES = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+// 16-step melody pattern (indices into MELODY_NOTES, -1 = rest)
+const MELODY_PAT = [0,2,4,3, 2,4,5,4, 3,2,0,2, 4,-1,5,-1];
+// 16-step bass pattern (root/fifth)
+const BASS_NOTES = [65.41, 65.41, 98.00, 65.41,  65.41, 98.00, 65.41, 73.42,
+                    65.41, 65.41, 98.00, 65.41,  73.42, 65.41, 98.00, 65.41];
+// kick: beats 1 & 3 of each bar (steps 0,4,8,12 in 16-step)
+const KICK_PAT  = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
+// snare: beats 2 & 4 (steps 2,6,10,14)
+const SNARE_PAT = [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,0];
+// hi-hat: every step
+const HAT_PAT   = [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1];
+
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playKick(ctx, t) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'sine';
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.9, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+  o.start(t); o.stop(t + 0.23);
+}
+
+function playSnare(ctx, t) {
+  // white noise burst
+  const bufSize = ctx.sampleRate * 0.12;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'bandpass'; filt.frequency.value = 2200; filt.Q.value = 0.8;
+  const g = ctx.createGain();
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.45, t + 0.003);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+  src.start(t); src.stop(t + 0.15);
+}
+
+function playHat(ctx, t, accent) {
+  const bufSize = Math.floor(ctx.sampleRate * 0.05);
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const filt = ctx.createBiquadFilter();
+  filt.type = 'highpass'; filt.frequency.value = 8000;
+  const g = ctx.createGain();
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  const vol = accent ? 0.18 : 0.08;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+  src.start(t); src.stop(t + 0.05);
+}
+
+function playBass(ctx, t, freq) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'triangle';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.35, t + 0.01);
+  g.gain.setValueAtTime(0.35, t + STEP * 0.7);
+  g.gain.linearRampToValueAtTime(0, t + STEP * 0.9);
+  o.start(t); o.stop(t + STEP);
+}
+
+function playMelody(ctx, t, freq) {
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.type = 'sine';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.22, t + 0.015);
+  g.gain.setValueAtTime(0.22, t + STEP * 0.65);
+  g.gain.linearRampToValueAtTime(0, t + STEP * 0.85);
+  o.start(t); o.stop(t + STEP);
+}
+
+function scheduleStep(ctx, step, t) {
+  const s16 = step % 16;
+  if (KICK_PAT[s16])  playKick(ctx, t);
+  if (SNARE_PAT[s16]) playSnare(ctx, t);
+  if (HAT_PAT[s16])   playHat(ctx, t, s16 % 2 === 0);
+  playBass(ctx, t, BASS_NOTES[s16]);
+  const mi = MELODY_PAT[s16];
+  if (mi >= 0) playMelody(ctx, t, MELODY_NOTES[mi]);
+}
+
+function scheduler() {
+  const ctx = getAudio();
+  while (nextNoteTime < ctx.currentTime + scheduleAhead) {
+    scheduleStep(ctx, currentStep, nextNoteTime);
+    nextNoteTime += STEP;
+    currentStep++;
+  }
+  scheduleTimer = setTimeout(scheduler, scheduleInterval);
+}
+
+function startMusic() {
+  const ctx = getAudio();
+  nextNoteTime = ctx.currentTime + 0.05;
+  currentStep = 0;
+  musicPlaying = true;
+  scheduler();
+  document.getElementById('dancer-svg-wrap').classList.add('spinning');
+  const btn = document.getElementById('music-btn');
+  btn.textContent = '⏹ Stop Music';
+  btn.classList.add('playing');
+}
+
+function stopMusic() {
+  clearTimeout(scheduleTimer);
+  scheduleTimer = null;
+  musicPlaying = false;
+  document.getElementById('dancer-svg-wrap').classList.remove('spinning');
+  const btn = document.getElementById('music-btn');
+  btn.textContent = '▶ Play Music';
+  btn.classList.remove('playing');
+}
+
+function toggleMusic() {
+  if (musicPlaying) { stopMusic(); } else { startMusic(); }
+}
+
+// ══════════════════════════════
+//  BOOT
+// ══════════════════════════════
+_dpEmojiInt    = setInterval(dpDropEmoji, 300);
+_dpConfettiInt = setInterval(dpSpawnConfetti, 150);
+startTimer();
+</script>
+</body>
+</html>
